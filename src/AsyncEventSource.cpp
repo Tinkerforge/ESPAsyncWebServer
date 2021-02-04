@@ -252,8 +252,9 @@ void AsyncEventSourceClient::_runQueue(){
 
   for(auto i = _messageQueue.begin(); i != _messageQueue.end(); ++i)
   {
-    if(!(*i)->sent())
+    if((*i) && !(*i)->sent()) {
       (*i)->send(_client);
+    }
   }
 }
 
