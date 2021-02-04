@@ -184,23 +184,33 @@ void AsyncEventSourceClient::_queueMessage(AsyncEventSourceMessage *dataMessage)
     delete dataMessage;
     return;
   }
-  if(_messageQueue.length() >= SSE_MAX_QUEUED_MESSAGES){
-      ets_printf("ERROR: Too many messages queued\n");
-      delete dataMessage;
-  } else {
-      _messageQueue.add(dataMessage);
+
+  {
+    AsyncWebLockGuard l(_messageQueueLock);
+    if(_messageQueue.length() >= SSE_MAX_QUEUED_MESSAGES){
+        ets_printf("ERROR: Too many messages queued\n");
+        delete dataMessage;
+    } else {
+        filter_queue_full_print = false;
+        _messageQueue.add(dataMessage);
+    }
   }
+
   if(_client->canSend())
     _runQueue();
 }
 
 void AsyncEventSourceClient::_onAck(size_t len, uint32_t time){
-  while(len && !_messageQueue.isEmpty()){
-    len = _messageQueue.front()->ack(len, time);
-    if(_messageQueue.front()->finished())
-      _messageQueue.remove(_messageQueue.front());
+  {
+      AsyncWebLockGuard l(_messageQueueLock);
+      for(auto i = _messageQueue.begin(); i != _messageQueue.end(); ++i) {
+          len = (*i)->ack(len, time);
+          if(len == 0)
+              break;
+      }
   }
-
+  // Don't remove finished entries from queue: This would be a race condition with _runQueue,
+  // as an ack while _runQueue iterates over the _messageQueue would then invalidate the iterators
   _runQueue();
 }
 
@@ -235,7 +245,8 @@ void AsyncEventSourceClient::send(const char *message, const char *event, uint32
 }
 
 void AsyncEventSourceClient::_runQueue(){
-  while(!_messageQueue.isEmpty() && _messageQueue.front()->finished()){
+  AsyncWebLockGuard l(_messageQueueLock);
+  while(!_messageQueue.isEmpty() && (_messageQueue.front() == NULL || _messageQueue.front()->finished())){
     _messageQueue.remove(_messageQueue.front());
   }
 
