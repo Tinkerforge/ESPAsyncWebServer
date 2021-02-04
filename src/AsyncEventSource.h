@@ -75,6 +75,7 @@ class AsyncEventSourceClient {
     void _queueMessage(AsyncEventSourceMessage *dataMessage);
     void _runQueue();
     AsyncWebLock _messageQueueLock;
+    bool filter_queue_full_print = false;
 
   public:
 

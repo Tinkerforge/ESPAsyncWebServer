@@ -188,7 +188,10 @@ void AsyncEventSourceClient::_queueMessage(AsyncEventSourceMessage *dataMessage)
   {
     AsyncWebLockGuard l(_messageQueueLock);
     if(_messageQueue.length() >= SSE_MAX_QUEUED_MESSAGES){
-        ets_printf("ERROR: Too many messages queued\n");
+        if (!filter_queue_full_print) {
+            ets_printf("ERROR: Too many messages queued\n");
+            filter_queue_full_print = true;
+        }
         delete dataMessage;
     } else {
         filter_queue_full_print = false;
