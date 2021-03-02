@@ -341,10 +341,14 @@ class AsyncWebHandler {
     virtual bool canHandle(AsyncWebServerRequest *request __attribute__((unused))){
       return false;
     }
-    virtual void handleRequest(AsyncWebServerRequest *request __attribute__((unused))){}
+    virtual void handleRequest(AsyncWebServerRequest *request __attribute__((unused))){
+        if((_username != "" && _password != "") && !request->authenticate(_username.c_str(), _password.c_str()))
+            return request->requestAuthentication();
+    }
     virtual void handleUpload(AsyncWebServerRequest *request  __attribute__((unused)), const String& filename __attribute__((unused)), size_t index __attribute__((unused)), uint8_t *data __attribute__((unused)), size_t len __attribute__((unused)), bool final  __attribute__((unused))){}
     virtual void handleBody(AsyncWebServerRequest *request __attribute__((unused)), uint8_t *data __attribute__((unused)), size_t len __attribute__((unused)), size_t index __attribute__((unused)), size_t total __attribute__((unused))){}
     virtual bool isRequestHandlerTrivial(){return true;}
+    virtual bool isAuthenticationSet() {return _username != "" || _password != "";}
 };
 
 /*
@@ -400,6 +404,8 @@ class AsyncWebServer {
     LinkedList<AsyncWebRewrite*> _rewrites;
     LinkedList<AsyncWebHandler*> _handlers;
     AsyncCallbackWebHandler* _catchAllHandler;
+    String _username;
+    String _password;
 
   public:
     AsyncWebServer(uint16_t port);
@@ -436,6 +442,8 @@ class AsyncWebServer {
     void _handleDisconnect(AsyncWebServerRequest *request);
     void _attachHandler(AsyncWebServerRequest *request);
     void _rewriteRequest(AsyncWebServerRequest *request);
+
+    void setAuthentication(const char *username, const char *password){  _username = String(username);_password = String(password); };
 };
 
 class DefaultHeaders {

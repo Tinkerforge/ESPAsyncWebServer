@@ -119,6 +119,8 @@ class AsyncCallbackWebHandler: public AsyncWebHandler {
     }
   
     virtual void handleRequest(AsyncWebServerRequest *request) override final {
+      if((_username != "" && _password != "") && !request->authenticate(_username.c_str(), _password.c_str()))
+        return request->requestAuthentication();
       if(_onRequest)
         _onRequest(request);
       else

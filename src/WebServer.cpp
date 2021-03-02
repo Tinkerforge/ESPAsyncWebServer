@@ -38,6 +38,7 @@ AsyncWebServer::AsyncWebServer(uint16_t port)
   _catchAllHandler = new AsyncCallbackWebHandler();
   if(_catchAllHandler == NULL)
     return;
+  _catchAllHandler->setAuthentication(this->_username.c_str(), this->_password.c_str());
   _server.onClient([](void *s, AsyncClient* c){
     if(c == NULL)
       return;
@@ -71,6 +72,8 @@ AsyncWebRewrite& AsyncWebServer::rewrite(const char* from, const char* to){
 }
 
 AsyncWebHandler& AsyncWebServer::addHandler(AsyncWebHandler* handler){
+  if (!handler->isAuthenticationSet())
+      handler->setAuthentication(this->_username.c_str(), this->_password.c_str());
   _handlers.add(handler);
   return *handler;
 }
