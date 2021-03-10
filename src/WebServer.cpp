@@ -194,3 +194,12 @@ void AsyncWebServer::reset(){
   }
 }
 
+void AsyncWebServer::setAuthentication(const char *username, const char* password) {
+    for(const auto& h: _handlers){
+        if (!h->isAuthenticationSet() || h->isAuthenticationEqual(_username.c_str(), _password.c_str()))
+            h->setAuthentication(username, password);
+    }
+
+    _username = String(username);
+    _password = String(password);
+}

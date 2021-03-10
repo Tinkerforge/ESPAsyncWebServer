@@ -349,6 +349,7 @@ class AsyncWebHandler {
     virtual void handleBody(AsyncWebServerRequest *request __attribute__((unused)), uint8_t *data __attribute__((unused)), size_t len __attribute__((unused)), size_t index __attribute__((unused)), size_t total __attribute__((unused))){}
     virtual bool isRequestHandlerTrivial(){return true;}
     virtual bool isAuthenticationSet() {return _username != "" || _password != "";}
+    virtual bool isAuthenticationEqual(const char *username, const char *password) { return _username == username && _password == password; }
 };
 
 /*
@@ -443,7 +444,7 @@ class AsyncWebServer {
     void _attachHandler(AsyncWebServerRequest *request);
     void _rewriteRequest(AsyncWebServerRequest *request);
 
-    void setAuthentication(const char *username, const char *password){  _username = String(username);_password = String(password); };
+    void setAuthentication(const char *username, const char *password);
 };
 
 class DefaultHeaders {
