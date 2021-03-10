@@ -69,17 +69,19 @@ class AsyncCallbackWebHandler: public AsyncWebHandler {
     String _uri;
     WebRequestMethodComposite _method;
     ArRequestHandlerFunction _onRequest;
+    ArRequestHandlerFunction _onNotAuthorized;
     ArUploadHandlerFunction _onUpload;
     ArBodyHandlerFunction _onBody;
     bool _isRegex;
   public:
-    AsyncCallbackWebHandler() : _uri(), _method(HTTP_ANY), _onRequest(NULL), _onUpload(NULL), _onBody(NULL), _isRegex(false) {}
+    AsyncCallbackWebHandler() : _uri(), _method(HTTP_ANY), _onRequest(NULL), _onNotAuthorized(NULL), _onUpload(NULL), _onBody(NULL), _isRegex(false) {}
     void setUri(const String& uri){ 
       _uri = uri; 
       _isRegex = uri.startsWith("^") && uri.endsWith("$");
     }
     void setMethod(WebRequestMethodComposite method){ _method = method; }
     void onRequest(ArRequestHandlerFunction fn){ _onRequest = fn; }
+    void onNotAuthorized(ArRequestHandlerFunction fn){ _onNotAuthorized = fn; }
     void onUpload(ArUploadHandlerFunction fn){ _onUpload = fn; }
     void onBody(ArBodyHandlerFunction fn){ _onBody = fn; }
 
@@ -119,8 +121,15 @@ class AsyncCallbackWebHandler: public AsyncWebHandler {
     }
   
     virtual void handleRequest(AsyncWebServerRequest *request) override final {
-      if((_username != "" && _password != "") && !request->authenticate(_username.c_str(), _password.c_str()))
-        return request->requestAuthentication();
+      if((_username != "" && _password != "") && !request->authenticate(_username.c_str(), _password.c_str())) {
+        if(_onNotAuthorized) {
+            _onNotAuthorized(request);
+            return;
+        } else {
+            request->requestAuthentication();
+            return;
+        }
+      }
       if(_onRequest)
         _onRequest(request);
       else
