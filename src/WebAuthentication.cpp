@@ -86,6 +86,29 @@ static bool getMD5(uint8_t * data, uint16_t len, char * output){//33 bytes or mo
   return true;
 }
 
+static String genRandomString(){
+  uint8_t data[16] = {0};
+  uint32_t t = micros();
+  uint8_t i = 0;
+  memcpy(data, &t, sizeof(t));
+#ifdef _BUILD_TIME_
+  t = _BUILD_TIME_;
+  memcpy(data + 4, &t, sizeof(t));
+#else
+  t = millis();
+  memcpy(data + 4, &t, sizeof(t));
+#endif
+  uint32_t r = rand();
+  memcpy(data + 8, &r, sizeof(r));
+  r = rand();
+  memcpy(data + 12, &r, sizeof(r));
+
+  char buf[33] = {0};
+  getMD5(data, 16, buf);
+
+  return String(buf);
+}
+
 static String genRandomMD5(){
 #ifdef ESP8266
   uint32_t r = RANDOM_REG32;
@@ -134,9 +157,9 @@ String requestDigestAuthentication(const char * realm){
   else
     header.concat(realm);
   header.concat( "\", qop=\"auth\", nonce=\"");
-  header.concat(genRandomMD5());
+  header.concat(genRandomString());
   header.concat("\", opaque=\"");
-  header.concat(genRandomMD5());
+  header.concat(genRandomString());
   header.concat("\"");
   return header;
 }
