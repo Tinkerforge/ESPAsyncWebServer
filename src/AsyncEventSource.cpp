@@ -329,6 +329,8 @@ size_t AsyncEventSource::avgPacketsWaiting() const {
 void AsyncEventSource::send(const char *message, const char *event, uint32_t id, uint32_t reconnect){
   String ev = generateEventMessage(message, event, id, reconnect);
   for(const auto &c: _clients){
+    if(c == nullptr)
+      continue;
     if(c->connected()) {
       c->write(ev.c_str(), ev.length());
     }
